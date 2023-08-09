@@ -24,27 +24,17 @@ Here's how to do it:
 
 ```shell
 # Create a new Conda environment
-conda env create -n obb --file https://raw.githubusercontent.com/OpenBB-finance/OpenBBTerminal/main/build/conda/conda-3-9-env.yaml
+conda env create -f environment.yml
 
 # Activate the new Conda environment
 conda activate obb
-
-# Install openBB
-pip install openbb --no-cache-dir
 ```
 
 For more information, please refer to the [openBB installation guide](https://docs.openbb.co/terminal/installation/pypi).
 
 #### Step 2: Set Up Your API Keys
 
-You'll need to provide your own API keys to use Mazza Value Invest. Insert your API keys into a file named `api.yaml` and move this file to the `credentials` directory. The format of `api.yaml` should be as follows:
-
-```yaml
-keys:
-    fmp: 'your-api-key-here'
-```
-
-Replace `'your-api-key-here'` with your actual API key.
+Rename the credentials template.yaml file to credentials.yml and enter your API key
 
 Now, you're ready to start using Mazza Value Invest to identify the best value investment opportunities!
 
@@ -57,3 +47,6 @@ Contributions are welcome! Feel free to open an issue or submit a pull request.
 This project is licensed under the terms of the MIT license.
 
 Enjoy identifying the best value investment opportunities with Mazza Value Invest!
+
+
+
