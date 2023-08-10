@@ -1,52 +1,34 @@
-
 # Mazza Value Invest
+
+Mazza Value Invest is a data-driven investment project designed to harness the power of value investing principles. Our goal is to systematically identify the best investment opportunities in the market, ensuring our strategies are both informed and effective.
 
 ## Overview
 
-Mazza Value Invest is a data-driven investment project that leverages value investing principles to identify the best investment opportunities. This project is built on openBB, a powerful financial analytics tool.
+In the dynamic world of investment, data plays an indispensable role. By combining traditional value investing principles with modern data analytics, we aim to provide insights that are both deep and actionable.
 
+Powered by **openBB**, a renowned financial analytics tool, our approach emphasizes rigorous research, continuous learning, and adaptation to the ever-evolving financial landscape.
+
+## Features
+
+- **Data-Driven Analysis**: Dive deep into financial metrics and indicators to discover the most promising investment opportunities.
+- **Value Investing Principles**: Ground your investment decisions in time-tested value investing methodologies.
+- **Integration with openBB**: Leverage the advanced analytics capabilities of openBB, ensuring your investment strategies are backed by reliable data.
+  
 ## Getting Started
 
-To get started with Mazza Value Invest, you'll need to set up your environment and install the necessary dependencies. Here's a step-by-step guide.
+1. **Setup**: Ensure you have the required dependencies installed. Check `environment.yml` for the list of necessary packages.
+2. **Data Analysis**: Navigate to the `notebooks` directory to explore the data analysis and methodologies we've implemented.
+3. **Backend**: The `backend` directory contains the API and database configurations, built with FastAPI.
+4. **Frontend**: If you're interested in the user interface, head over to the `frontend` directory, where our React-based web application resides.
 
-### Prerequisites
+## Contributions
 
-- Python 3.9 or above
-- Conda package manager
-
-### Installation
-
-#### Step 1: Install openBB
-
-First, install openBB. You can do this using pip, the Python package manager. If you're using Conda, you'll want to create and activate a new environment for openBB.
-
-Here's how to do it:
-
-```shell
-# Create a new Conda environment
-conda env create -f environment.yml
-
-# Activate the new Conda environment
-conda activate obb
-```
-
-For more information, please refer to the [openBB installation guide](https://docs.openbb.co/terminal/installation/pypi).
-
-#### Step 2: Set Up Your API Keys
-
-Rename the credentials template.yaml file to credentials.yml and enter your API key
-
-Now, you're ready to start using Mazza Value Invest to identify the best value investment opportunities!
-
-## Contributing
-
-Contributions are welcome! Feel free to open an issue or submit a pull request.
+We welcome contributions to Mazza Value Invest. Whether it's improving the codebase, adding new features, or simply reporting issues, every bit helps in refining and enhancing this project.
 
 ## License
 
-This project is licensed under the terms of the MIT license.
+Please refer to the `LICENSE` file for information on how you can use, share, or modify this project.
 
-Enjoy identifying the best value investment opportunities with Mazza Value Invest!
+## Acknowledgements
 
-
-
+A special thanks to the developers behind **openBB** for creating such a powerful tool that has been instrumental in the success of Mazza Value Invest.

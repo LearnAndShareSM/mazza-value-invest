@@ -1,13 +1,17 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import yaml
+import os 
 
-# Load the database and API credentials
-with open('credentials.yaml', 'r') as file:
+dir_path = os.path.dirname(os.path.realpath(__file__))
+credentials_path = os.path.join(dir_path, '..', 'credentials.yaml')
+
+
+with open(credentials_path, 'r') as file:
     config = yaml.safe_load(file)
 
-# Connect to the database
+
 engine = create_engine(f"sqlite:///{config['database']['file']}")
 
-# Create a new session
+
 Session = sessionmaker(bind=engine)
