@@ -35,3 +35,16 @@ def read_table_data(table_name):
         else:
             print(f"The table {table_name} does not exist in the database.")
             return pd.DataFrame()
+
+
+from .schema_models import Balance
+
+
+def get_periods_and_tickers(session):
+    periods = session.query(Balance.period).distinct().all()
+    tickers = session.query(Balance.ticker).distinct().all()
+    return {"periods": [x[0] for x in periods], "tickers": [x[0] for x in tickers]}
+
+
+def get_filtered_data(session, period, ticker):
+    return session.query(Balance).filter_by(period=period, ticker=ticker).all()

@@ -1,9 +1,26 @@
-from fastapi import FastAPI, HTTPException
-from db.db_utils import table_exists
+from fastapi import FastAPI, HTTPException, Depends
+from db.db_utils import table_exists, get_periods_and_tickers, get_filtered_data
+from db.db_engine import Session as SessionLocal
 from dotenv import load_dotenv
 import os
 
 app = FastAPI()
+
+from fastapi.middleware.cors import CORSMiddleware
+
+# Set up CORS
+origins = [
+    "http://localhost:3000",   # This is where your React app might run in development
+    "http://localhost:8000",   # This is where your FastAPI backend might run
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 load_dotenv()
 
@@ -12,11 +29,18 @@ if not DATABASE_PATH:
     raise ValueError("DATABASE_PATH environment variable is not set. Please define it in the .env file.")
 
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 @app.get("/db-check")
 def check_db_connection():
     try:
-        # Try to list tables to check DB connection. This is a simple way to check the connection.
-        if table_exists("fa_balance"):
+        if table_exists("any_table_name"):
             return {"status": "success", "message": "Connected to the database successfully!"}
         else:
             return {
@@ -25,3 +49,13 @@ def check_db_connection():
             }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/fa-balance/options")
+def get_fa_balance_options(db: SessionLocal = Depends(get_db)):
+    return get_periods_and_tickers(db)
+
+
+@app.get("/fa-balance/")
+def get_fa_balance_data(period: str, ticker: str, db: SessionLocal = Depends(get_db)):
+    return get_filtered_data(db, period, ticker)

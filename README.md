@@ -4,12 +4,10 @@
 ## Introduction
 This repository is dedicated to data-driven financial analysis and models. The codebase primarily utilizes the OpenBB library for data fetching and analysis.
 
-## Prerequisites
-
-- Anaconda or Miniconda installed
-- Python 3.9 or above
+Nella parte di notebook lavoreremo con openBB in modo da richiamare i dati e storicizzarli o in una data lake house o un un DB
 
 ## Installation
+
 
 ### Install OpenBB
 
@@ -37,3 +35,10 @@ pip install openbb --no-cache-dir
 Aggiungi il file .env al backend con le credenziali
 
 FMP_SECRET_KEY=<your_key>
+DATABASE_PATH=<your_database>
+
+
+Per lavorare con il backend
+
+cd backend
+conda env create -f environment.yml
