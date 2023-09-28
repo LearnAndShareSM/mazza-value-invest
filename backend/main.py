@@ -56,6 +56,10 @@ def get_fa_balance_options(db: SessionLocal = Depends(get_db)):
     return get_periods_and_tickers(db)
 
 
+# @app.get("/fa-balance/")
+# def get_fa_balance_data(period: str, ticker: str, db: SessionLocal = Depends(get_db)):
+#     return get_filtered_data(db, period, ticker)
+
 @app.get("/fa-balance/")
-def get_fa_balance_data(period: str, ticker: str, db: SessionLocal = Depends(get_db)):
-    return get_filtered_data(db, period, ticker)
+def get_fa_balance_data( db: SessionLocal = Depends(get_db)):
+    return get_filtered_data(db)

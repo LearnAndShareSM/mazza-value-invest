@@ -1,10 +1,23 @@
 
 # Finance Data Driven
 
+Progetto con il quale in seguito all'elaborazione dati questi vengono salvati in un db, e i dati dal db vengono letti dal frontend react per essere interrogati
+
+Requisiti funzionali:
+
+Voglio creare una web app che che parla di finanza, sia attraverso contenuti scritti sia attraverso l’analisi dinamica dei dati finanziari con tabelle e grafici, con i seguenti requisiti funzionali di base:
+
+- home page che introduce al sito web e spiega cosa fa
+- una pagina di alert in cui è contenuta una tabella con dei dati relativi a vari asset. La tabella è letta da un db che al momento si tratta essere di un db sqlachemy
+- altra sezione formato blog con un elenco di articoli
+
+
 ## Introduction
 This repository is dedicated to data-driven financial analysis and models. The codebase primarily utilizes the OpenBB library for data fetching and analysis.
 
 Nella parte di notebook lavoreremo con openBB in modo da richiamare i dati e storicizzarli o in una data lake house o un un DB
+
+
 
 ## Installation
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import axios from 'axios';
+
 
 function App() {
   const [periods, setPeriods] = useState([]);
@@ -9,14 +11,20 @@ function App() {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    // Fetch periods and tickers
-    fetch("/fa-balance/options")
-      .then(response => response.json())
-      .then(data => {
-        setPeriods(data.periods);
-        setTickers(data.tickers);
+      
+    axios.get('/fa-balance/options')
+      .then(response => {
+        setPeriods(response.data.periods);
+        setTickers(response.data.tickers);
+      })
+      .catch(error => {
+        console.error('There was an error fetching data', error);
       });
-  }, []);
+
+  }
+  
+  
+  , []);
 
   const fetchData = () => {
     fetch(`/fa-balance/?period=${selectedPeriod}&ticker=${selectedTicker}`)
