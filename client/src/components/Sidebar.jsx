@@ -18,18 +18,7 @@ import {
   ChevronLeft,
   ChevronRightOutlined,
   HomeOutlined,
-  ShoppingCartCheckoutOutlined,
-  Groups2Outlined,
   ReceiptLongOutlined,
-  PublicOffOutlined,
-  PointOfSaleOutlined,
-  TodayOutlined,
-  CalendarMonthOutlined,
-  AdminPanelSettingsOutlined,
-  TrendingUpOutlined,
-  PieChartOutlineOutlined,
-  ShoppingCartOutlined,
-  PublicOutlined,
 } from "@mui/icons-material";
 
 import { useEffect, useState } from "react";
@@ -38,60 +27,8 @@ import FlexBetween from "./FlexBetween";
 import profileImage from "assets/profile.jpeg";
 const navItems = [
   {
-    text: "Dashboard",
-    icon: <HomeOutlined />,
-  },
-  {
-    text: "Client Facing",
-    icon: null,
-  },
-  {
-    text: "Products",
-    icon: <ShoppingCartOutlined />,
-  },
-  {
-    text: "Customers",
-    icon: <Groups2Outlined />,
-  },
-  {
-    text: "Transactions",
+    text: "List Assets",
     icon: <ReceiptLongOutlined />,
-  },
-  {
-    text: "Geography",
-    icon: <PublicOutlined />,
-  },
-  {
-    text: "Sales",
-    icon: null,
-  },
-  {
-    text: "Overview",
-    icon: <PointOfSaleOutlined />,
-  },
-  {
-    text: "Daily",
-    icon: <TodayOutlined />,
-  },
-  {
-    text: "Monthly",
-    icon: <CalendarMonthOutlined />,
-  },
-  {
-    text: "Breakdown",
-    icon: <PieChartOutlineOutlined />,
-  },
-  {
-    text: "Management",
-    icon: null,
-  },
-  {
-    text: "Admin",
-    icon: <AdminPanelSettingsOutlined />,
-  },
-  {
-    text: "Performance",
-    icon: <TrendingUpOutlined />,
   },
 ];
 
@@ -133,7 +70,7 @@ const Sidebar = ({
               <FlexBetween color={theme.palette.secondary.main}>
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    ECOMVISION
+                    ML FINANCE
                   </Typography>
                 </Box>
                 {!isNotMobile && (

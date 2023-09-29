@@ -88,12 +88,11 @@ const Transactions = () => {
           pagination
           page={page}
           pageSize={pageSize}
-          paginationMode="server"
-          sortingMode="server"
+          paginationMode="client"
+          sortingMode="client"
           onPageChange={(newPage) => setPage(newPage)}
           onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
           onSortModelChange={(newSortModel) => {
-            console.log("New sort model:", newSortModel);
             setSort(newSortModel);
           }}
           slots={{
