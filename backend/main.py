@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 origins = [
     "http://localhost:3000",   # This is where your React app might run in development
     "http://localhost:8000",   # This is where your FastAPI backend might run
+    "http://localhost:5001", 
 ]
 
 app.add_middleware(

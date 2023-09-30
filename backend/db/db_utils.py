@@ -46,5 +46,8 @@ def get_periods_and_tickers(session):
     return {"periods": [x[0] for x in periods], "tickers": [x[0] for x in tickers]}
 
 
-def get_filtered_data(session, period, ticker):
-    return session.query(Balance).filter_by(period=period, ticker=ticker).all()
+# def get_filtered_data(session, period, ticker):
+#     return session.query(Balance).filter_by(period=period, ticker=ticker).all()
+
+def get_filtered_data(session):
+    return session.query(Balance).all()

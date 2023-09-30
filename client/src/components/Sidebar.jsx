@@ -30,6 +30,14 @@ const navItems = [
     text: "List Assets",
     icon: <ReceiptLongOutlined />,
   },
+  // {
+  //   text: "",
+  //   icon: null,
+  // },
+  // {
+  //   text: "Dashboard",
+  //   icon: <HomeOutlined />,
+  // },
 ];
 
 const Sidebar = ({

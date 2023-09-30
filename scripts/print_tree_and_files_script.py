@@ -42,14 +42,18 @@ if __name__ == "__main__":
     output_file_path = "custom_tree_and_files_corrected.txt"
     exclude_patterns = "'__pycache__|node_modules|public|.venv|.git|.vscode|__init__.py|__init__.pyc|__py'"
     file_list = [#"README.md",
-                    "README.md",
+                   # "README.md",
                     "backend/main.py",
-                    "backend/db/db_engine.py",
-                    "backend/db/db_utils.py",
-                    "backend/db/schema_models.py",
+                    #"backend/db/db_engine.py",
+                    # "backend/db/db_utils.py",
+                    # "backend/db/schema_models.py",
 
-                    "frontend/src/index.js",
-                    "frontend/src/App.js",
+                    "client/src/index.js",
+                    "client/src/App.js",
+                    "client/src/scenes/layout/index.jsx",
+                    "client/src/scenes/transactions/index.jsx",
+                    "client/src/state/api.js"
+
 
                  ]
 
