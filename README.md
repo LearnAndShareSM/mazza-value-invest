@@ -102,7 +102,8 @@ This section serves as a diary where we document the various episodes in the dev
 ### Episodes
 
 1. **Introduction to the Finance Data Driven Platform**  
-   - [Episode 1 - Kickstart](https://saveriomazza.substack.com/p/building-a-data-analytics-platform)
+   - [Episode 1 - Kickstart](https://open.substack.com/pub/saveriomazza/p/building-a-data-analytics-platform?r=huo5t&utm_campaign=post&utm_medium=web)
+   - [Episode 2 - Kickstart](https://open.substack.com/pub/saveriomazza/p/building-a-data-analytics-platform-d8b?r=huo5t&utm_campaign=post&utm_medium=web)
 
 
 ## Contributing
