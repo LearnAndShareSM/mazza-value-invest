@@ -1,6 +1,7 @@
 data/
 archive/
 repo_utils_scripts/
+mlruns/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
