@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/e20658cffa464c55a91ce1706b28a0d7/artifacts
+end_time: 1696370842340
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: e20658cffa464c55a91ce1706b28a0d7
+run_name: abundant-shrew-303
+run_uuid: e20658cffa464c55a91ce1706b28a0d7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696370839261
+status: 4
+tags: []
+user_id: sam

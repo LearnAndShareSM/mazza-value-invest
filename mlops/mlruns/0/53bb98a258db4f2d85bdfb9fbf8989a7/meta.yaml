@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/53bb98a258db4f2d85bdfb9fbf8989a7/artifacts
+end_time: 1696371176600
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 53bb98a258db4f2d85bdfb9fbf8989a7
+run_name: useful-rook-662
+run_uuid: 53bb98a258db4f2d85bdfb9fbf8989a7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696371174749
+status: 3
+tags: []
+user_id: sam

@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/332968998d1a4628a0fd15bcf5105f89/artifacts
+end_time: 1696370586254
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 332968998d1a4628a0fd15bcf5105f89
+run_name: model_training
+run_uuid: 332968998d1a4628a0fd15bcf5105f89
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696370199859
+status: 3
+tags: []
+user_id: sam

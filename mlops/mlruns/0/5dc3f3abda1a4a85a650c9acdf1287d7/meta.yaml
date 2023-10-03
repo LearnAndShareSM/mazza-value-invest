@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/5dc3f3abda1a4a85a650c9acdf1287d7/artifacts
+end_time: 1696371184300
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 5dc3f3abda1a4a85a650c9acdf1287d7
+run_name: whimsical-lamb-426
+run_uuid: 5dc3f3abda1a4a85a650c9acdf1287d7
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696371181067
+status: 3
+tags: []
+user_id: sam

@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/4d2e33245d6e4fca8a3d34b73512dc1b/artifacts
+end_time: 1696371174745
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 4d2e33245d6e4fca8a3d34b73512dc1b
+run_name: nimble-smelt-816
+run_uuid: 4d2e33245d6e4fca8a3d34b73512dc1b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696371172713
+status: 3
+tags: []
+user_id: sam

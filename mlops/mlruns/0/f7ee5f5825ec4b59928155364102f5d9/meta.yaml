@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/f7ee5f5825ec4b59928155364102f5d9/artifacts
+end_time: 1696370602507
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: f7ee5f5825ec4b59928155364102f5d9
+run_name: agreeable-sloth-701
+run_uuid: f7ee5f5825ec4b59928155364102f5d9
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696370588715
+status: 4
+tags: []
+user_id: sam

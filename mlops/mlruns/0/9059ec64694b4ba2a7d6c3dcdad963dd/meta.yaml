@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/9059ec64694b4ba2a7d6c3dcdad963dd/artifacts
+end_time: 1696371033588
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 9059ec64694b4ba2a7d6c3dcdad963dd
+run_name: thundering-snipe-745
+run_uuid: 9059ec64694b4ba2a7d6c3dcdad963dd
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696371029366
+status: 4
+tags: []
+user_id: sam

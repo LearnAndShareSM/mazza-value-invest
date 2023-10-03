@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/89be6bc6332e4feda7411c3382642db8/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 89be6bc6332e4feda7411c3382642db8
+run_name: sedate-snipe-29
+run_uuid: 89be6bc6332e4feda7411c3382642db8
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696370621001
+status: 1
+tags: []
+user_id: sam

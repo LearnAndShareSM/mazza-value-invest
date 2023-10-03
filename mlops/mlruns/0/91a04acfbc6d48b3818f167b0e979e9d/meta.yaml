@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/91a04acfbc6d48b3818f167b0e979e9d/artifacts
+end_time: 1696370834087
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 91a04acfbc6d48b3818f167b0e979e9d
+run_name: auspicious-conch-724
+run_uuid: 91a04acfbc6d48b3818f167b0e979e9d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696370831091
+status: 4
+tags: []
+user_id: sam

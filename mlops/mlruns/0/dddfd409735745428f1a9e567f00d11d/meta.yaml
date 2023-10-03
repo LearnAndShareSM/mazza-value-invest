@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/dddfd409735745428f1a9e567f00d11d/artifacts
+end_time: 1696371122556
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: dddfd409735745428f1a9e567f00d11d
+run_name: chill-deer-601
+run_uuid: dddfd409735745428f1a9e567f00d11d
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696371117171
+status: 4
+tags: []
+user_id: sam

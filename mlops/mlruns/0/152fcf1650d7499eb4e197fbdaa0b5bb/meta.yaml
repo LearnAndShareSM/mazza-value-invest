@@ -1,0 +1,15 @@
+artifact_uri: file:///home/sam/github/finance-data-driven/mlops/mlruns/0/152fcf1650d7499eb4e197fbdaa0b5bb/artifacts
+end_time: 1696371179151
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 152fcf1650d7499eb4e197fbdaa0b5bb
+run_name: selective-crane-737
+run_uuid: 152fcf1650d7499eb4e197fbdaa0b5bb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1696371176602
+status: 3
+tags: []
+user_id: sam
