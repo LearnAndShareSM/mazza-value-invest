@@ -30,11 +30,9 @@ def train_random_forest(params, X, y):
     mlflow.log_params(params)
     mlflow.sklearn.log_model(clf, "random_forest_model")
 
-# Load training config
 with open("../config/train_config.yaml", 'r') as f:
     train_config = yaml.safe_load(f)
 
-# Sample dataset
 X, y = make_classification()
 
 # Start an MLFlow run and log everything
