@@ -1,4 +1,0 @@
-# config/optuna_config.yaml
-study_name: "Hyperparameter Optimization"
-storage: "sqlite:///example.db"
-n_trials: 2

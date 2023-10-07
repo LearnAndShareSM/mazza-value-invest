@@ -1,3 +1,0 @@
-# config/mlflow_config.yaml
-experiment_name: "Finance Experiment"
-artifact_location: "file:///home/sam/github/finance-data-driven/mlops/" # for local, or "s3://your-bucket/mlruns" for S3

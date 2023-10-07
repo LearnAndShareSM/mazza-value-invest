@@ -1,7 +1,47 @@
-import os
-import sys
+
+
+=== Content of /home/sam/github/finance-data-driven/config/train_config.yaml ===
+
+path_experiments_storage: "/home/sam/github/finance-data-driven/data/experiments_storage"
+
+xgboost:
+  learning_rate: 0.1
+  max_depth: 6
+  n_estimators: 100
+
+random_forest:
+  n_estimators: 100
+  max_depth: None
+  min_samples_split: 2
+
+validation_method: 'comb_purged_kfold'  # Can be 'kfold', 'stratified_kfold', or 'comb_purged_kfold'
+
+
+
+
+=== Content of /home/sam/github/finance-data-driven/mlops/model_training/model_validation.py ===
+
+import itertools as itt
+import numbers
+import numpy as np
+import pandas as pd
+
+from abc import abstractmethod
+from typing import Iterable, Tuple, List
+
+class BaseTimeSeriesCrossValidator:
+    ...
+  
+
+
+class CombPurgedKFoldCV(BaseTimeSeriesCrossValidator):
+    ...
+
+=== Content of /home/sam/github/finance-data-driven/mlops/model_training/train_model.py ===
+
+
 import yaml
-import warnings
+import sys
 import pandas as pd
 import mlflow
 import optuna
@@ -9,6 +49,7 @@ from sklearn.model_selection import KFold, StratifiedKFold
 from xgboost import XGBClassifier
 from dotenv import load_dotenv
 from model_validation import CombPurgedKFoldCV
+import warnings
 
 # Suppress warnings
 warnings.filterwarnings('ignore', category=FutureWarning)
@@ -17,7 +58,8 @@ warnings.filterwarnings('ignore', category=UserWarning)
 # Load environment variables
 load_dotenv()
 
-def load_config(path: str) -> dict:
+# Function to load configuration
+def load_config(path):
     try:
         with open(path, 'r') as f:
             return yaml.safe_load(f)
@@ -25,34 +67,45 @@ def load_config(path: str) -> dict:
         print(f"Configuration file {path} not found. Exiting.")
         sys.exit()
 
-def load_dataset(path: str) -> pd.DataFrame:
+# Function to load dataset
+def load_dataset(path):
     try:
         return pd.read_csv(path)
     except FileNotFoundError:
         print(f"Data file {path} not found. Exiting.")
         sys.exit()
 
-def ensure_directory_exists(directory: str):
+import os
+
+# Function to ensure the directory exists or create it
+def ensure_directory_exists(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
         print(f"Directory {directory} created.")
     else:
         print(f"Directory {directory} already exists.")
 
-config_path = os.path.join(os.getenv('CONFIG_PATH', 'default/path/to/config'), 'train_config.yaml')
-config = load_config(config_path)
+
+
+
+
+# Initialize configurations
+config = load_config("../../config/train_config.yaml")
+
+# Directory from configuration and database path
+path_experiments_storage = config['path_experiments_storage']
 
 # Ensure directory exists
-path_experiments_storage = config['path_experiments_storage']
 ensure_directory_exists(path_experiments_storage)
 
-# Initialize MLflow and Optuna
-mlflow_artifact_location = os.path.join(path_experiments_storage, "mlruns")
-mlflow.set_tracking_uri(mlflow_artifact_location)
-mlflow.set_experiment(config.get('experiment_name', 'Default_Experiment'))
 
+db_path = os.path.join(path_experiments_storage, "optuna.db")
+mlflow_artifact_location = os.path.join(path_experiments_storage, "mlruns")
+
+mlflow.set_tracking_uri(mlflow_artifact_location)
+mlflow.set_experiment(config.get('experiment_name', 'Default_Experiment2'))
+# Initialize Optuna
 try:
-    db_path = os.path.join(path_experiments_storage, "optuna.db")
     study = optuna.create_study(
         study_name=config.get('study_name', 'Default_Study_Name'),
         storage=f"sqlite:///{db_path}",
@@ -64,8 +117,7 @@ except Exception as e:
     print(f"Could not initialize Optuna study. Error: {e}")
 
 # Load and prepare dataset
-dataset_path = config.get('dataset_path', '/default/path/to/dataset.csv')
-df_train = load_dataset(dataset_path)
+df_train = load_dataset('/home/sam/github/finance-data-driven/data/processed/synthetic_ticker_data.csv')
 cols_feat = [c for c in df_train.columns if c not in ['datetime', 'target', 'ticker']]
 X = df_train[cols_feat]
 y = df_train['target']
@@ -90,6 +142,8 @@ elif cv_method == 'stratified_kfold':
 else:
     print(f"Invalid cross-validation method: {cv_method}. Exiting.")
     sys.exit()
+
+
 
 # Objective function for Optuna optimization
 def objective(trial):

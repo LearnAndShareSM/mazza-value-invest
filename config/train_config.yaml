@@ -1,4 +1,4 @@
-# config/train_config.yaml
+path_experiments_storage: "/home/sam/github/finance-data-driven/data/experiments_storage"
 
 xgboost:
   learning_rate: 0.1
@@ -10,4 +10,6 @@ random_forest:
   max_depth: None
   min_samples_split: 2
 
-validation_method: 'kfold'  # Can be 'kfold', 'stratified_kfold', or 'comb_purged_kfold'
+validation_method: 'comb_purged_kfold'  # Can be 'kfold', 'stratified_kfold', or 'comb_purged_kfold'
+
+
