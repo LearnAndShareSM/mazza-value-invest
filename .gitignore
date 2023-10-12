@@ -3,6 +3,7 @@ archive/
 repo_utils_scripts/
 mlruns/
 mlops/mlruns
+investorkit
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
