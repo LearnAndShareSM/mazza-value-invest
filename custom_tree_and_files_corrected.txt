@@ -1,5 +1,6 @@
 /home/sam/github/data-driven-investor-platform
 ├── backend
+│   ├── config
 │   ├── db
 │   │   ├── db_engine.py
 │   │   ├── db_generete_schema_model.py
@@ -7,18 +8,44 @@
 │   │   └── schema_models.py
 │   ├── environment.yml
 │   ├── main.py
+│   ├── monitoring
 │   ├── requirements.txt
 │   └── tests
 │       └── test_db_operations.py
-├── config
-│   └── train_config.yaml
 ├── custom_tree_and_files_corrected.txt
 ├── data
 ├── data_pipeline
+│   ├── database
+│   │   ├── database_session.py
+│   │   ├── models
+│   │   │   └── financial_statements.py
+│   │   └── utils
+│   ├── fetch_data
+│   │   └── fetch_equities.py
+│   ├── investorkit
+│   │   ├── environment.yml
+│   │   ├── .gitignore
+│   │   ├── investorkit
+│   │   │   └── get_data
+│   │   │       └── base.py
+│   │   ├── LICENSE
+│   │   ├── README.md
+│   │   └── requirements.txt
+│   ├── main.py
+│   ├── monitoring
+│   │   └── prometheus_metrics.py
+│   ├── setup_database.py
+│   └── utils
+│       ├── config.py
+│       ├── constants.py
+│       ├── context_manager.py
+│       └── process_data.py
 ├── .env
 ├── frontend
+│   ├── config
 │   ├── .gitignore
 │   ├── jsconfig.json
+│   ├── monitoring
 │   ├── package.json
 │   ├── package-lock.json
 │   ├── README.md
@@ -47,41 +74,134 @@
 │       └── theme.js
 ├── .gitignore
 ├── ingestion
-├── investorkit
-│   ├── environment.yml
-│   ├── .gitignore
-│   ├── investorkit
-│   │   └── get_data
-│   │       └── base.py
-│   ├── LICENSE
-│   ├── README.md
-│   └── requirements.txt
 ├── LICENSE
 └── README.md
 
-20 directories, 40 files
+29 directories, 49 files
 
 
-=== Content of /home/sam/github/data-driven-investor-platform/config/train_config.yaml ===
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/main.py ===
 
-path_experiments_storage: "/home/sam/github/finance-data-driven/data/experiments_storage"
+from fetch_data.fetch_equities import (
+    fetch_and_store_profiles,
+    fetch_and_store_financial_statements,
+)
+from database.database_session import SessionLocal, engine  # Centralized import
+from utils.config import FMP_API_KEY  # Centralized configuration
+from prometheus_client import start_http_server
+import logging  # Using logging instead of print statements
 
-xgboost:
-  learning_rate: 0.1
-  max_depth: 6
-  n_estimators: 100
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-random_forest:
-  n_estimators: 100
-  max_depth: None
-  min_samples_split: 2
+if __name__ == "__main__":
+    start_http_server(8000)
+    logger.info("HTTP server started on port 8000")
 
-validation_method: 'comb_purged_kfold'  # Can be 'kfold', 'stratified_kfold', or 'comb_purged_kfold'
+    try:
+        fetch_and_store_profiles(engine, FMP_API_KEY, SessionLocal)
+        fetch_and_store_financial_statements(engine, FMP_API_KEY, SessionLocal)
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
 
 
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/setup_database.py ===
+
+from sqlalchemy import create_engine
+from database.models.financial_statements import Base
+from utils.config import DATABASE_URL  # Import from the consolidated config file
+
+engine = create_engine(DATABASE_URL)
 
 
-=== Content of /home/sam/github/data-driven-investor-platform/investorkit/investorkit/get_data/base.py ===
+def setup_database():
+    Base.metadata.create_all(bind=engine)
+
+
+if __name__ == "__main__":
+    setup_database()
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/utils/process_data.py ===
+
+import numpy as np
+from utils.constants import MIN_BIGINT, MAX_BIGINT
+
+
+def filter_bigint_range(df):
+    min_bigint = -MIN_BIGINT
+    max_bigint = MAX_BIGINT
+
+    for col in df.select_dtypes(include=[np.number]).columns:
+        mask = (df[col] >= min_bigint) & (df[col] <= max_bigint)
+        df = df[mask]
+
+    return df
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/utils/config.py ===
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+FMP_API_KEY = os.getenv("FMP_SECRET_KEY")
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/utils/context_manager.py ===
+
+from contextlib import contextmanager
+from sqlalchemy.orm import sessionmaker
+
+
+@contextmanager
+def session_scope(SessionLocal):
+    """Provide a transactional scope around a series of operations."""
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/utils/constants.py ===
+
+MIN_BIGINT = -9223372036854775808
+MAX_BIGINT = 9223372036854775807
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/monitoring/prometheus_metrics.py ===
+
+from prometheus_client import Summary, Counter, Gauge
+
+EXECUTION_TIME = Summary("function_execution_seconds", "Time spent processing.")
+NEW_SYMBOLS = Counter(
+    "new_symbols_fetched", "Number of new symbols fetched.", ["run_id"]
+)
+SYMBOLS_LENGTH = Gauge(
+    "symbols_length", "Length of the list of symbols fetched.", ["run_id"]
+)
+TOTAL_RECORDS = Gauge(
+    "total_records", "Total number of records in the profiles table.", ["run_id"]
+)
+FETCH_PARAMS = Gauge(
+    "fetch_params",
+    "Parameters passed to fetch_equity_symbols",
+    ["country", "market", "run_id"],
+)
+MISSING_SYMBOLS = Counter(
+    "missing_symbols_fetched", "Number of missing new symbols.", ["run_id"]
+)
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/investorkit/investorkit/get_data/base.py ===
 
 from typing import Union, List, Tuple
 import pandas as pd
@@ -259,3 +379,211 @@ def get_profile(tickers, api_key):
     profile_dataframe = profile_dataframe.reset_index(drop=True)
 
     return profile_dataframe
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/database/database_session.py ===
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from utils.config import DATABASE_URL
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/database/models/financial_statements.py ===
+
+from sqlalchemy import Column, String, Integer, Boolean, Date, Sequence, BigInteger
+from sqlalchemy.orm import declarative_base
+
+Base = declarative_base()
+
+
+# SQLAlchemy Models
+class Profile(Base):
+    __tablename__ = "profiles"
+    symbol = Column(String, primary_key=True, index=True)
+    companyName = Column(String)
+    cik = Column(Integer)
+    exchange = Column(String)
+    exchangeShortName = Column(String)
+    industry = Column(String)
+    sector = Column(String)
+    country = Column(String)
+    ipoDate = Column(Date)
+    defaultImage = Column(Boolean)
+    isEtf = Column(Boolean)
+    isActivelyTrading = Column(Boolean)
+
+
+class CashFlow(Base):
+    __tablename__ = "cashflows2"
+    __table_args__ = {"extend_existing": True}
+
+    id = Column(Integer, Sequence("cashflow_id_seq"), primary_key=True, index=True)
+    date = Column(String)  # Representing period[Q-DEC] as string
+    symbol = Column(String, index=True)
+    reportedCurrency = Column(String)
+    cik = Column(BigInteger)
+    fillingDate = Column(Date)
+    acceptedDate = Column(Date)
+    calendarYear = Column(BigInteger)
+    period = Column(String)
+
+    # Columns changed from Integer to BigInteger
+    netIncome = Column(BigInteger)
+    depreciationAndAmortization = Column(BigInteger)
+    deferredIncomeTax = Column(BigInteger)
+    stockBasedCompensation = Column(BigInteger)
+    changeInWorkingCapital = Column(BigInteger)
+    accountsReceivables = Column(BigInteger)
+    inventory = Column(BigInteger)
+    accountsPayables = Column(BigInteger)
+    otherWorkingCapital = Column(BigInteger)
+    otherNonCashItems = Column(BigInteger)
+    netCashProvidedByOperatingActivities = Column(BigInteger)
+    investmentsInPropertyPlantAndEquipment = Column(BigInteger)
+    acquisitionsNet = Column(BigInteger)
+    purchasesOfInvestments = Column(BigInteger)
+    salesMaturitiesOfInvestments = Column(BigInteger)
+    otherInvestingActivites = Column(BigInteger)
+    netCashUsedForInvestingActivites = Column(BigInteger)
+    debtRepayment = Column(BigInteger)
+    commonStockIssued = Column(BigInteger)
+    commonStockRepurchased = Column(BigInteger)
+    dividendsPaid = Column(BigInteger)
+    otherFinancingActivites = Column(BigInteger)
+    netCashUsedProvidedByFinancingActivities = Column(BigInteger)
+    effectOfForexChangesOnCash = Column(BigInteger)
+    netChangeInCash = Column(BigInteger)
+    cashAtEndOfPeriod = Column(BigInteger)
+    cashAtBeginningOfPeriod = Column(BigInteger)
+    operatingCashFlow = Column(BigInteger)
+    capitalExpenditure = Column(BigInteger)
+    freeCashFlow = Column(BigInteger)
+
+    link = Column(String)
+    finalLink = Column(String)
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/fetch_data/fetch_equities.py ===
+
+import financedatabase as fd
+from investorkit.investorkit.get_data.base import get_profile, get_financial_statements
+from monitoring.prometheus_metrics import (
+    EXECUTION_TIME,
+    NEW_SYMBOLS,
+    SYMBOLS_LENGTH,
+    FETCH_PARAMS,
+    MISSING_SYMBOLS,
+)
+from utils.context_manager import session_scope
+from utils.process_data import filter_bigint_range
+from datetime import datetime
+import pandas as pd
+
+run_id = datetime.now().isoformat()
+
+
+def store_to_db(df, table_name, engine, SessionLocal):
+    with session_scope(SessionLocal) as session:
+        df.to_sql(table_name, con=engine, if_exists="append", index=False)
+        session.flush()
+
+
+@EXECUTION_TIME.time()
+def fetch_equity_symbols(country="United States", market="NASDAQ Global Select"):
+    equities = fd.Equities()
+    selected_columns = [
+        "name",
+        "currency",
+        "sector",
+        "industry_group",
+        "industry",
+        "exchange",
+        "market",
+        "market_cap",
+    ]
+    us_equities = equities.select(country=country)
+    df_equities = us_equities[us_equities["market"] == market][selected_columns]
+    list_symbols = list(df_equities.index)
+
+    SYMBOLS_LENGTH.labels(run_id=run_id).set(len(list_symbols))
+    FETCH_PARAMS.labels(country=country, market=market, run_id=run_id).set(
+        len(list_symbols)
+    )
+
+    return list_symbols
+
+
+@EXECUTION_TIME.time()
+def get_new_symbols(list_symbols, engine):
+    existing_symbols_query = "SELECT symbol FROM profiles;"
+    existing_symbols = pd.read_sql(existing_symbols_query, con=engine)
+    new_symbols = list(set(list_symbols) - set(existing_symbols["symbol"].tolist()))
+    new_symbols = new_symbols[:20]
+
+    NEW_SYMBOLS.labels(run_id=run_id).inc(len(new_symbols))
+
+    return new_symbols
+
+
+def fetch_and_store_profiles(engine, api_key, SessionLocal):
+    list_symbols = fetch_equity_symbols()
+    new_symbols = get_new_symbols(list_symbols, engine)
+
+    if new_symbols:
+        df_profiles = get_profile(new_symbols, api_key)
+
+        if not df_profiles.empty:
+            missing_symbols = set(new_symbols) - set(df_profiles["symbol"])
+            MISSING_SYMBOLS.labels(run_id=run_id).inc(len(missing_symbols))
+
+            list_cols = [
+                "symbol",
+                "companyName",
+                "cik",
+                "exchange",
+                "exchangeShortName",
+                "industry",
+                "sector",
+                "country",
+                "ipoDate",
+                "defaultImage",
+                "isEtf",
+                "isActivelyTrading",
+            ]
+
+            df_profiles_filtered = df_profiles[list_cols]
+            df_profiles_filtered["ipoDate"].replace("", None, inplace=True)
+            df_profiles_filtered["cik"].replace("", None, inplace=True)
+
+            store_to_db(df_profiles_filtered, "profiles", engine, SessionLocal)
+        else:
+            print("No profiles found for the new symbols.")
+            MISSING_SYMBOLS.labels(run_id=run_id).inc(len(new_symbols))
+
+
+def fetch_and_store_financial_statements(engine, api_key, SessionLocal):
+    query = "SELECT DISTINCT symbol FROM cashflows2;"
+    existing_symbols_df = pd.read_sql(query, engine)
+    existing_symbols = set(existing_symbols_df["symbol"])
+
+    query = "SELECT * FROM profiles;"
+    df_profiles = pd.read_sql(query, engine)
+
+    list_symbols = list(df_profiles["symbol"])
+    list_symbols = [symbol for symbol in list_symbols if symbol not in existing_symbols]
+
+    chunks = [list_symbols[i : i + 100] for i in range(0, len(list_symbols), 100)]
+
+    for chunk in chunks:
+        df, invalid_tickers = get_financial_statements(
+            tickers=chunk,
+            statement="cashflow",
+            api_key=api_key,
+            start_date="2000-01-01",
+        )
+
+        filtered_df = filter_bigint_range(df)
+        store_to_db(filtered_df, "cashflows2", engine, SessionLocal)

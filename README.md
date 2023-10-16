@@ -1,120 +1,81 @@
 
-# Finance Data Driven Platform
+# Finance Data-Driven Platform
+
+## Description
+
+The Finance Data-Driven Platform is engineered to offer data-driven insights that will aid in investment decision-making. The platform achieves this by gathering data from various sources and applying machine learning models coupled with statistical analysis. At its core, it is built on a robust data extraction and processing pipeline that feeds a PostgreSQL database. This database serves as the input for both MLOps activities and the web application.
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Project Phases](#project-phases)
-3. [Technology Stack](#technology-stack)
-4. [Features](#features)
-    - [Data Ingestion](#data-ingestion)
-    - [Data Processing](#data-processing)
-    - [Machine Learning](#machine-learning)
-    - [Data Storage](#data-storage)
-    - [Monitoring and Evaluation](#monitoring-and-evaluation)
-5. [Architecture](#architecture)
-    - [Backend](#backend)
-    - [Frontend](#frontend)
-    - [Microservices and Orchestration](#microservices-and-orchestration)
-6. [Deployment](#deployment)
-7. [Development Diary](#development-diary)
-8. [Contributing](#contributing)
-9. [License](#license)
-10. [Subscribe](#subscribe)
+- [Description](#description)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage](#usage)
+- [Architecture](#architecture)
+- [Data Pipeline](#data-pipeline)
+- [Monitoring](#monitoring)
+- [Future Improvements](#future-improvements)
+- [License](#license)
+- [Contributing](#contributing)
+- [Authors and Acknowledgment](#authors-and-acknowledgment)
+  
+## Getting Started
 
-## Overview
+### Prerequisites
 
-The Finance Data Driven Platform is designed to offer data-driven insights to aid investment decision-making by processing data from various sources and applying machine learning models and statistical analysis. This repository hosts the code and resources for the current and future development stages. This platform is part of a series of articles that serve as a journal detailing the project's progress.
+- Python 3.x
+- PostgreSQL
+- FinancialModelingPrep API Key
 
-## Project Phases
+### Installation
 
-The project is divided into multiple phases. The first phase focuses on data sourcing, data storage, data processing, modeling, monitoring and evaluation, frontend development, architecture, and deployment environment.
+1. Clone the repository: `git clone https://github.com/yourusername/finance-data-driven-platform.git`
+2. Navigate to the project directory.
+3. Install the required dependencies: `pip install -r requirements.txt`
+4. Create a `.env` file in the root directory and add your FinancialModelingPrep API Key as `FMP_SECRET_KEY`.
 
-## Technology Stack
+## Usage
 
-- **Operating System**: Ubuntu
-- **Version Control**: Git and GitHub
-- **Languages**: Python, SQL, PySpark
-- **Libraries**: Pandas, Polars, Dask, scikit-learn, MLFlow, Optuna
-- **Web Framework**: FastAPI for Backend, React and Next.js for Frontend
-- **Data Visualization**: D3.js
-- **Query Language**: GraphQL
-- **Containerization**: Docker
-- **Orchestration**: Kubernetes
-
-## Features
-
-### Data Ingestion
-
-- Data is sourced from APIs like OpenBB and FinancialModelingPrep.
-- Initial data frequency is once a day, with plans to increase to near real-time.
-- Future considerations include utilizing Apache Kafka and Kafka Connectors.
-
-### Data Processing
-
-- Comprehensive data pipelines for cleaning and processing.
-- Handle missing data, outliers, and ensure data quality.
-- Conduct feature engineering using Python and PySpark, with libraries like Pandas, Polars, and Dask.
-
-### Machine Learning
-
-- Utilizes both classic financial asset evaluation models and supervised models like XGBoost.
-- In-depth study of target variables.
-- MLOps tools include MLFlow and Optuna.
-
-### Data Storage
-
-- Data lake houses like Apache Iceberg and Delta Lake.
-- Relational databases like PostgreSQL and NoSQL databases like MongoDB.
-- Feature storage through Feast.
-
-### Monitoring and Evaluation
-
-- MLFlow for model tracking, Prometheus for system monitoring.
-- Custom monitoring solutions are also being considered.
+1. To fetch and store data, run the following command: `python data_pipeline/main.py`
+2. To set up the database, run: `python data_pipeline/setup_database.py`
+3. Detailed instructions for backend and frontend are available in their respective directories.
 
 ## Architecture
 
-### Backend
+The project is currently hosted on an Ubuntu server and uses Git and GitHub for version control. It comprises the following main components:
+- Frontend of the Finance Data-Driven Platform
+- Backend of the Finance Data-Driven Platform
+- Data extraction and processing pipeline
+- Investorkit package
 
-- Developed using FastAPI for high performance and scalability.
+## Data Pipeline
 
-### Frontend
+- Data is sourced from various APIs, initially from FinancialModelingPrep.
+- The main focus is on company financial statements like balance sheets, income statements, and cash flows.
+- Logic for historical data tracking and daily updates is implemented.
+- Data is stored in a PostgreSQL database and SQLAlchemy is used for ORM.
 
-- Utilizes React, Next.js, and D3.js for data visualization.
-- GraphQL for flexible queries to the backend.
+## Monitoring
 
-### Microservices and Orchestration
+- Prometheus and Grafana are used for monitoring data ingestion and other activities.
 
-- Microservices architecture for scalability and maintainability.
-- Docker and Kubernetes for containerization and orchestration.
+## Future Improvements
 
-## Deployment
-
-- Hybrid deployment environment for local on-premises testing and initial POC deployments.
-- Architecture will scale in line with customer growth.
-
-
-## Development Diary
-
-This section serves as a diary where we document the various episodes in the development of this project. Each episode is published on Substack and focuses on specific aspects and progress.
-
-### Episodes
-
-1. **Introduction to the Finance Data Driven Platform**  
-   - [Episode 1 - Kickstart](https://open.substack.com/pub/saveriomazza/p/building-a-data-analytics-platform?r=huo5t&utm_campaign=post&utm_medium=web)
-   - [Episode 2 - Kickstart](https://open.substack.com/pub/saveriomazza/p/building-a-data-analytics-platform-d8b?r=huo5t&utm_campaign=post&utm_medium=web)
-
-
-## Contributing
-
-Please read the documentation for guidelines on how to contribute to this project.
+- Transition to a microservices architecture for better scalability and maintainability.
+- Docker and Kubernetes are being considered for orchestration.
+- FastAPI will be the primary framework for the backend.
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for more details.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
+## Contributing
 
----
+For contributions, please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-This README is a living document and will be updated as the project evolves. Suggestions for additional tools and technologies are welcome.
+## Authors and Acknowledgment
+
+- Your name/your team's names
+- Special thanks to all contributors and supporters.
+
