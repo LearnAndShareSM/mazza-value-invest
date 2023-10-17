@@ -1,7 +1,8 @@
 from dotenv import load_dotenv
 import os
-from loguru import logger
+from loguru import logger  # Using Loguru for logging
 
+# Load environment variables
 load_dotenv()
 
 try:

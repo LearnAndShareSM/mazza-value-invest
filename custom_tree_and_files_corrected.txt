@@ -21,53 +21,54 @@
 │   │   ├── LICENSE
 │   │   ├── README.md
 │   │   └── requirements.txt
+│   ├── logs
 │   ├── main.py
-│   ├── monitoring
-│   │   └── prometheus_metrics.py
 │   ├── setup_database.py
 │   └── utils
 │       ├── context_manager.py
 │       └── process_data.py
-├── directory
 ├── .env
-├── file
 ├── .gitignore
 ├── LICENSE
-├── my_log_file.log
-├── no
-├── or
+├── logs
+│   └── data_pipeline.log
 └── README.md
 
-18 directories, 21 files
+15 directories, 20 files
 
 
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/main.py ===
 
-# Existing imports...
+from datetime import datetime
+from loguru import logger
 from fetch_data.fetch_equities import (
     fetch_and_store_profiles,
     fetch_and_store_financial_statements,
 )
 from database.database_session import SessionLocal, engine
-from common.config import FMP_API_KEY, HTTP_PORT
-from prometheus_client import start_http_server
-import logging
+from common.config import FMP_API_KEY
 
-# Initialize logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
+logger.add("./logs/data_pipeline.log", rotation="1 day", level="INFO", serialize=True)
+
 
 if __name__ == "__main__":
-    try:
-        # Starting HTTP server for metrics
-        start_http_server(HTTP_PORT)
-        logger.info(f"HTTP server started on port {HTTP_PORT}")
+    run_id = datetime.now().isoformat()
+    common_args = {
+        "engine": engine,
+        "api_key": FMP_API_KEY,
+        "SessionLocal": SessionLocal,
+        "run_id": run_id,
+    }
 
-        fetch_and_store_profiles(engine, FMP_API_KEY, SessionLocal)
-        fetch_and_store_financial_statements(engine, FMP_API_KEY, SessionLocal)
+    try:
+        logger.bind(run_id=run_id).info("Starting data pipeline")
+
+        fetch_and_store_profiles(**common_args)
+        fetch_and_store_financial_statements(**common_args)
 
     except Exception as e:
-        logger.exception(f"An error occurred: {e}")
+        logger.bind(run_id=run_id).exception("An error occurred: {}", e)
 
 
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/setup_database.py ===
@@ -91,16 +92,13 @@ if __name__ == "__main__":
 
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/utils/process_data.py ===
 
-# Existing imports...
 import numpy as np
 import pandas as pd
 from common.constants import MIN_BIGINT, MAX_BIGINT
-import logging
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
-def filter_bigint_range(df: pd.DataFrame) -> pd.DataFrame:
+def filter_bigint_range(df: pd.DataFrame, run_id) -> pd.DataFrame:
     try:
         min_bigint, max_bigint = MIN_BIGINT, MAX_BIGINT
         numeric_cols = df.select_dtypes(include=[np.number]).columns
@@ -108,11 +106,14 @@ def filter_bigint_range(df: pd.DataFrame) -> pd.DataFrame:
         for col in numeric_cols:
             df = df.query(f"{min_bigint} <= {col} <= {max_bigint}")
 
-        logger.info(f"Filtered DataFrame based on the bigint range.")
+        logger.bind(run_id=run_id).info(
+            f"Filtered DataFrame based on the bigint range."
+        )
         return df
-
     except Exception as e:
-        logger.exception(f"An error occurred while filtering DataFrame: {e}")
+        logger.bind(run_id=run_id).exception(
+            f"An error occurred while filtering DataFrame: {e}"
+        )
         return pd.DataFrame()
 
 
@@ -120,52 +121,22 @@ def filter_bigint_range(df: pd.DataFrame) -> pd.DataFrame:
 
 from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker
+from loguru import logger
 
 
 @contextmanager
-def session_scope(SessionLocal):
+def session_scope(SessionLocal, run_id):
     """Provide a transactional scope around a series of operations."""
     session = SessionLocal()
     try:
         yield session
         session.commit()
-    except:
+        logger.bind(run_id=run_id).info("Session committed successfully.")
+    except Exception as e:
         session.rollback()
-        raise
+        logger.bind(run_id=run_id).exception(f"An error occurred: {e}")
     finally:
         session.close()
-
-
-=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/monitoring/prometheus_metrics.py ===
-
-from prometheus_client import Summary, Counter, Gauge
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-try:
-    EXECUTION_TIME = Summary("function_execution_seconds", "Time spent processing.")
-    NEW_SYMBOLS = Counter(
-        "new_symbols_fetched", "Number of new symbols fetched.", ["run_id"]
-    )
-    SYMBOLS_LENGTH = Gauge(
-        "symbols_length", "Length of the list of symbols fetched.", ["run_id"]
-    )
-    TOTAL_RECORDS = Gauge(
-        "total_records", "Total number of records in the profiles table.", ["run_id"]
-    )
-    FETCH_PARAMS = Gauge(
-        "fetch_params",
-        "Parameters passed to fetch_equity_symbols",
-        ["country", "market", "run_id"],
-    )
-    MISSING_SYMBOLS = Counter(
-        "missing_symbols_fetched", "Number of missing new symbols.", ["run_id"]
-    )
-    logger.info("Successfully initialized Prometheus metrics.")
-except Exception as e:
-    logger.error(f"Failed to initialize Prometheus metrics: {e}")
 
 
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/investorkit/investorkit/get_data/base.py ===
@@ -195,6 +166,18 @@ except ImportError:
 # rounding = 4
 # progress_bar = True
 
+from typing import Union, List, Tuple
+import pandas as pd
+import numpy as np
+from loguru import logger  # Using Loguru for logging
+
+try:
+    from tqdm import tqdm
+
+    ENABLE_TQDM = True
+except ImportError:
+    ENABLE_TQDM = False
+
 
 def get_financial_statements(
     tickers: Union[str, List[str]],
@@ -206,33 +189,6 @@ def get_financial_statements(
     rounding: Union[int, None] = 4,
     progress_bar: bool = True,
 ) -> Tuple[pd.DataFrame, List[str]]:
-    """
-    Retrieves financial statements for one or multiple companies and returns a DataFrame.
-
-    Args:
-        tickers: List of company tickers.
-        statement: Type of financial statement ("balance", "income", or "cashflow").
-        api_key: API key for financial data provider.
-        quarter: Whether to retrieve quarterly data.
-        start_date: Start date to filter data.
-        end_date: End date to filter data.
-        rounding: Rounding precision.
-        progress_bar: Show progress bar for more than 10 tickers.
-
-    Returns:
-        Tuple containing the DataFrame of financial statements and a list of invalid tickers.
-
-    Example:
-
-        df, invalid_tickers = get_financial_statements(
-            tickers=["AAPL", "META"],
-            statement="cashflow",
-            api_key="your_api_key_here",
-            start_date="2000-01-01"
-        )
-    """
-
-    # Ensure tickers is a list
     if not isinstance(tickers, (list, str)):
         raise ValueError(f"Invalid type for tickers: {type(tickers)}")
 
@@ -251,7 +207,6 @@ def get_financial_statements(
         )
 
     period = "quarter" if quarter else "annual"
-
     financial_statement_dict = {}
     invalid_tickers = []
 
@@ -267,16 +222,12 @@ def get_financial_statements(
         try:
             financial_statement = pd.read_json(url)
             if financial_statement.empty:
-                logging.warning(f"Received empty data for {ticker}")
                 invalid_tickers.append(ticker)
                 continue
-
         except Exception as error:
-            # logging.warning(f"Could not fetch data for {ticker}. Error: {error}")
             invalid_tickers.append(ticker)
             continue
 
-        # Convert date to appropriate format
         date_col = "date" if quarter else "calendarYear"
         freq = "Q" if quarter else "Y"
         financial_statement[date_col] = pd.to_datetime(
@@ -289,7 +240,6 @@ def get_financial_statements(
         return pd.DataFrame(), invalid_tickers
 
     financial_statement_total = pd.concat(financial_statement_dict)
-
     financial_statement_total.reset_index(drop=True, inplace=True)
     financial_statement_total = financial_statement_total.drop_duplicates().reset_index(
         drop=True
@@ -308,31 +258,12 @@ def get_financial_statements(
 
 
 def get_profile(tickers, api_key):
-    """
-    Description
-    ----
-    Gives information about the profile of a company which includes
-    i.a. beta, company description, industry, and sector.
-
-    Parameters
-    ----
-    tickers : list or str
-        The company tickers (e.g., "AAPL" or ["AAPL", "GOOGL"]).
-    api_key : str
-        The API Key obtained from Financial Modeling Prep.
-
-    Returns
-    ----
-    pd.DataFrame
-        Data with variables in rows and tickers in columns.
-    """
-    # Ensure tickers is a list
     if not isinstance(tickers, (list, str)):
         raise ValueError(f"Type for the tickers ({type(tickers)}) variable is invalid.")
 
     tickers = tickers if isinstance(tickers, list) else [tickers]
-
     profiles = {}
+
     for ticker in tqdm(tickers):
         try:
             data = pd.read_json(
@@ -340,7 +271,7 @@ def get_profile(tickers, api_key):
             )
             profiles[ticker] = data
         except Exception as error:
-            print(f"Warning: Could not fetch data for {ticker}. Error: {error}")
+            logger.warning(f"Could not fetch data for {ticker}. Error: {error}")
 
     profile_dataframe = pd.concat(profiles)
     profile_dataframe = profile_dataframe.reset_index(drop=True)
@@ -350,15 +281,12 @@ def get_profile(tickers, api_key):
 
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/database/database_session.py ===
 
-# Existing imports...
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from loguru import logger
 from common.config import DATABASE_URL
-import logging
 
-logger = logging.getLogger(__name__)
 
-# Initialize the database
 try:
     engine = create_engine(DATABASE_URL)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -446,30 +374,23 @@ class CashFlow(Base):
 
 from dotenv import load_dotenv
 import os
-import logging
+from loguru import logger  # Using Loguru for logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
+# Load environment variables
 load_dotenv()
 
 try:
     DATABASE_URL = os.getenv("DATABASE_URL")
     FMP_API_KEY = os.getenv("FMP_SECRET_KEY")
-    HTTP_PORT = int(os.getenv("HTTP_PORT", 8000))
 
     if DATABASE_URL is None:
         logger.warning("DATABASE_URL environment variable is missing.")
-
     if FMP_API_KEY is None:
         logger.warning("FMP_SECRET_KEY environment variable is missing.")
 
-    if HTTP_PORT is None:
-        logger.warning("HTTP_PORT environment variable is missing or invalid.")
-
     logger.info("Successfully loaded environment variables.")
 except Exception as e:
-    logger.error(f"Failed to load environment variables: {e}")
+    logger.exception("Failed to load environment variables: {}", e)
 
 
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/common/constants.py ===
@@ -482,35 +403,29 @@ MAX_BIGINT = 9223372036854775807
 
 import financedatabase as fd
 from investorkit.investorkit.get_data.base import get_profile, get_financial_statements
-from monitoring.prometheus_metrics import (
-    EXECUTION_TIME,
-    NEW_SYMBOLS,
-    SYMBOLS_LENGTH,
-    FETCH_PARAMS,
-    MISSING_SYMBOLS,
-)
 from utils.context_manager import session_scope
 from utils.process_data import filter_bigint_range
 from datetime import datetime
 import pandas as pd
-import logging
+from loguru import logger
 
-logging.basicConfig(filename="app.log", level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Add the run_id to logger context
 run_id = datetime.now().isoformat()
+logger.bind(run_id=run_id)
 
 
-def store_to_db(df, table_name, engine, SessionLocal):
+def store_to_db(df, table_name, engine, SessionLocal, run_id):
     try:
-        with session_scope(SessionLocal) as session:
+        with session_scope(SessionLocal, run_id) as session:
             df.to_sql(table_name, con=engine, if_exists="append", index=False)
             session.flush()
-        logger.info(f"Stored data into table {table_name}")
+        logger.bind(run_id=run_id).info(f"Stored data into table {table_name}")
     except Exception as e:
-        logger.error(f"Failed to store data into table {table_name}. Error: {e}")
+        logger.bind(run_id=run_id).error(
+            f"Failed to store data into table {table_name}. Error: {e}"
+        )
 
 
-@EXECUTION_TIME.time()
 def fetch_equity_symbols(country="United States", market="NASDAQ Global Select"):
     try:
         equities = fd.Equities()
@@ -527,47 +442,35 @@ def fetch_equity_symbols(country="United States", market="NASDAQ Global Select")
         us_equities = equities.select(country=country)
         df_equities = us_equities[us_equities["market"] == market][selected_columns]
         list_symbols = list(df_equities.index)
-
-        SYMBOLS_LENGTH.labels(run_id=run_id).set(len(list_symbols))
-        FETCH_PARAMS.labels(country=country, market=market, run_id=run_id).set(
-            len(list_symbols)
-        )
         logger.info(
             f"Fetched {len(list_symbols)} equity symbols for {country} - {market}"
         )
         return list_symbols
     except Exception as e:
-        logger.error(
+        logger.exception(
             f"Failed to fetch equity symbols for {country} - {market}. Error: {e}"
         )
 
 
-@EXECUTION_TIME.time()
 def get_new_symbols(list_symbols, engine):
     try:
         existing_symbols_query = "SELECT symbol FROM profiles;"
         existing_symbols = pd.read_sql(existing_symbols_query, con=engine)
         new_symbols = list(set(list_symbols) - set(existing_symbols["symbol"].tolist()))
         new_symbols = new_symbols[:20]
-
-        NEW_SYMBOLS.labels(run_id=run_id).inc(len(new_symbols))
         logger.info(f"Identified {len(new_symbols)} new symbols")
         return new_symbols
     except Exception as e:
-        logger.error(f"Failed to identify new symbols. Error: {e}")
+        logger.exception(f"Failed to identify new symbols. Error: {e}")
 
 
-def fetch_and_store_profiles(engine, api_key, SessionLocal):
+def fetch_and_store_profiles(engine, api_key, SessionLocal, run_id):
     list_symbols = fetch_equity_symbols()
     new_symbols = get_new_symbols(list_symbols, engine)
 
     if new_symbols:
         df_profiles = get_profile(new_symbols, api_key)
-
         if not df_profiles.empty:
-            missing_symbols = set(new_symbols) - set(df_profiles["symbol"])
-            MISSING_SYMBOLS.labels(run_id=run_id).inc(len(missing_symbols))
-
             list_cols = [
                 "symbol",
                 "companyName",
@@ -582,18 +485,15 @@ def fetch_and_store_profiles(engine, api_key, SessionLocal):
                 "isEtf",
                 "isActivelyTrading",
             ]
-
             df_profiles_filtered = df_profiles[list_cols]
             df_profiles_filtered["ipoDate"].replace("", None, inplace=True)
             df_profiles_filtered["cik"].replace("", None, inplace=True)
-
-            store_to_db(df_profiles_filtered, "profiles", engine, SessionLocal)
+            store_to_db(df_profiles_filtered, "profiles", engine, SessionLocal, run_id)
         else:
-            print("No profiles found for the new symbols.")
-            MISSING_SYMBOLS.labels(run_id=run_id).inc(len(new_symbols))
+            logger.warning("No profiles found for the new symbols.")
 
 
-def fetch_and_store_financial_statements(engine, api_key, SessionLocal):
+def fetch_and_store_financial_statements(engine, api_key, SessionLocal, run_id):
     try:
         query = "SELECT DISTINCT symbol FROM cashflows2;"
         existing_symbols_df = pd.read_sql(query, engine)
@@ -616,11 +516,10 @@ def fetch_and_store_financial_statements(engine, api_key, SessionLocal):
                 api_key=api_key,
                 start_date="2000-01-01",
             )
-
-            filtered_df = filter_bigint_range(df)
-            store_to_db(filtered_df, "cashflows2", engine, SessionLocal)
+            filtered_df = filter_bigint_range(df, run_id)
+            store_to_db(filtered_df, "cashflows2", engine, SessionLocal, run_id)
             logger.info(f"Stored financial statements for {len(chunk)} symbols.")
     except Exception as e:
-        logger.error(
+        logger.exception(
             f"An error occurred while fetching and storing financial statements: {e}"
         )

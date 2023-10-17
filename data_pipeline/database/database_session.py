@@ -1,12 +1,9 @@
-# Existing imports...
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from loguru import logger
 from common.config import DATABASE_URL
-import logging
 
-logger = logging.getLogger(__name__)
 
-# Initialize the database
 try:
     engine = create_engine(DATABASE_URL)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
