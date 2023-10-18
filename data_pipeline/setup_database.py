@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-from database.models.financial_statements import Base
-from data_pipeline.common.config import (
+from database.models import Base
+from common.config import (
     DATABASE_URL,
 )  # Import from the consolidated config file
 

@@ -1,4 +1,13 @@
-from sqlalchemy import Column, String, Integer, Boolean, Date, Sequence, BigInteger
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Boolean,
+    Date,
+    Sequence,
+    BigInteger,
+    DateTime,
+)
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -22,10 +31,11 @@ class Profile(Base):
 
 
 class CashFlow(Base):
-    __tablename__ = "cashflows2"
+    __tablename__ = "cashflows"
     __table_args__ = {"extend_existing": True}
 
-    id = Column(Integer, Sequence("cashflow_id_seq"), primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
     date = Column(String)  # Representing period[Q-DEC] as string
     symbol = Column(String, index=True)
     reportedCurrency = Column(String)
@@ -69,3 +79,37 @@ class CashFlow(Base):
 
     link = Column(String)
     finalLink = Column(String)
+
+
+# New model to represent the DataFrame
+class MarketCapData(Base):
+    __tablename__ = "hist_marketcap"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    symbol = Column(String, index=True)
+    date = Column(DateTime)
+    marketCap = Column(BigInteger)
+
+
+from sqlalchemy import Float
+
+
+# New model to represent the DataFrame with trading data
+class HistPrice(Base):
+    __tablename__ = "hist_prices"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    symbol = Column(String, index=True)
+    date = Column(DateTime)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    adjClose = Column(Float)
+    volume = Column(BigInteger)
+    unadjustedVolume = Column(BigInteger)
+    change = Column(Float)
+    changePercent = Column(Float)
+    vwap = Column(Float)
+    label = Column(String)
+    changeOverTime = Column(Float)

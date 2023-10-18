@@ -1,5 +1,5 @@
 /home/sam/github/data-driven-investor-platform
-├── :
+├── 1_data_ingestion.ipynb
 ├── data
 ├── data_pipeline
 │   ├── common
@@ -7,8 +7,7 @@
 │   │   └── constants.py
 │   ├── database
 │   │   ├── database_session.py
-│   │   ├── models
-│   │   │   └── financial_statements.py
+│   │   ├── models.py
 │   │   └── utils
 │   ├── fetch_data
 │   │   └── fetch_equities.py
@@ -22,7 +21,9 @@
 │   │   ├── README.md
 │   │   └── requirements.txt
 │   ├── logs
+│   │   └── data_pipeline.log
 │   ├── main.py
+│   ├── parse_api_fmp.ipynb
 │   ├── setup_database.py
 │   └── utils
 │       ├── context_manager.py
@@ -34,7 +35,7 @@
 │   └── data_pipeline.log
 └── README.md
 
-15 directories, 20 files
+13 directories, 23 files
 
 
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/main.py ===
@@ -44,6 +45,8 @@ from loguru import logger
 from fetch_data.fetch_equities import (
     fetch_and_store_profiles,
     fetch_and_store_financial_statements,
+    fetch_and_store_hist_prices,  # Add this line
+    fetch_and_store_market_cap_data,  # Add this line
 )
 from database.database_session import SessionLocal, engine
 from common.config import FMP_API_KEY
@@ -66,6 +69,8 @@ if __name__ == "__main__":
 
         fetch_and_store_profiles(**common_args)
         fetch_and_store_financial_statements(**common_args)
+        fetch_and_store_hist_prices(**common_args)  # Add this line
+        fetch_and_store_market_cap_data(**common_args)  # Add this line
 
     except Exception as e:
         logger.bind(run_id=run_id).exception("An error occurred: {}", e)
@@ -74,8 +79,8 @@ if __name__ == "__main__":
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/setup_database.py ===
 
 from sqlalchemy import create_engine
-from database.models.financial_statements import Base
-from data_pipeline.common.config import (
+from database.models import Base
+from common.config import (
     DATABASE_URL,
 )  # Import from the consolidated config file
 
@@ -144,10 +149,7 @@ def session_scope(SessionLocal, run_id):
 from typing import Union, List, Tuple
 import pandas as pd
 import numpy as np
-import logging
-
-# Initialize logging
-logging.basicConfig(level=logging.WARNING)
+from loguru import logger  # Using Loguru for logging
 
 try:
     from tqdm import tqdm
@@ -155,6 +157,7 @@ try:
     ENABLE_TQDM = True
 except ImportError:
     ENABLE_TQDM = False
+
 
 ### Useful for debug
 # tickers=list(df['symbol'])
@@ -165,18 +168,6 @@ except ImportError:
 # end_date=None
 # rounding = 4
 # progress_bar = True
-
-from typing import Union, List, Tuple
-import pandas as pd
-import numpy as np
-from loguru import logger  # Using Loguru for logging
-
-try:
-    from tqdm import tqdm
-
-    ENABLE_TQDM = True
-except ImportError:
-    ENABLE_TQDM = False
 
 
 def get_financial_statements(
@@ -279,25 +270,85 @@ def get_profile(tickers, api_key):
     return profile_dataframe
 
 
-=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/database/database_session.py ===
+def get_historical_market_cap(
+    tickers: Union[str, List[str]],
+    api_key: str = "",
+    start_date: Union[str, None] = None,
+) -> pd.DataFrame:
+    if not isinstance(tickers, (list, str)):
+        raise ValueError(f"Invalid type for tickers: {type(tickers)}")
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from loguru import logger
-from common.config import DATABASE_URL
+    ticker_list = tickers if isinstance(tickers, list) else [tickers]
+    df_marketcap = pd.DataFrame()
+
+    for ticker in ticker_list:
+        url = f"https://financialmodelingprep.com/api/v3/historical-market-capitalization/{ticker}?&apikey={api_key}"
+        try:
+            data_mod = pd.read_json(url)
+            if data_mod.empty:
+                continue
+
+            data_mod["date"] = pd.to_datetime(data_mod["date"])
+
+            if start_date:
+                start_date_dt = pd.to_datetime(start_date)
+                data_mod = data_mod[data_mod["date"] > start_date_dt]
+
+            df_marketcap = pd.concat([df_marketcap, data_mod], ignore_index=True)
+        except Exception as error:
+            logger.warning(f"Could not fetch data for {ticker}. Error: {error}")
+
+    return df_marketcap
 
 
-try:
-    engine = create_engine(DATABASE_URL)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    logger.info("Successfully initialized the database session.")
-except Exception as e:
-    logger.exception(f"An error occurred while initializing the database: {e}")
+def get_historical_prices(
+    tickers: List[str],
+    new_tickers: List[str],
+    api_key: str,
+    start_date: str,
+    end_date: str,
+) -> pd.DataFrame:
+    df_final_price = pd.DataFrame()
+
+    ticker_iterator = tqdm(tickers)
+    for ticker in ticker_iterator:
+        base_url = "https://financialmodelingprep.com/api/v3/historical-price-full/"
+        if ticker not in new_tickers:
+            url = f"{base_url}{ticker}?from={start_date}&to={end_date}&apikey={api_key}"
+        else:
+            url = f"{base_url}{ticker}?from=2000-01-01&to={end_date}&apikey={api_key}"
+
+        try:
+            df_price = pd.read_json(url)
+            if "historical" in df_price.columns:
+                exploded_df = df_price["historical"].apply(pd.Series)
+                final_df = pd.concat([df_price["symbol"], exploded_df], axis=1)
+                df_final_price = pd.concat(
+                    [df_final_price, final_df], ignore_index=True
+                )
+
+        except Exception as e:
+            logger.warning(f"Could not fetch data for {ticker}. Error: {e}")
+
+    logger.info(f"Shape of historical prices DataFrame: {df_final_price.shape}")
+
+    df_final_price["date"] = pd.to_datetime(df_final_price["date"])
+
+    return df_final_price
 
 
-=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/database/models/financial_statements.py ===
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/database/models.py ===
 
-from sqlalchemy import Column, String, Integer, Boolean, Date, Sequence, BigInteger
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Boolean,
+    Date,
+    Sequence,
+    BigInteger,
+    DateTime,
+)
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -321,10 +372,11 @@ class Profile(Base):
 
 
 class CashFlow(Base):
-    __tablename__ = "cashflows2"
+    __tablename__ = "cashflows"
     __table_args__ = {"extend_existing": True}
 
-    id = Column(Integer, Sequence("cashflow_id_seq"), primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
     date = Column(String)  # Representing period[Q-DEC] as string
     symbol = Column(String, index=True)
     reportedCurrency = Column(String)
@@ -370,6 +422,55 @@ class CashFlow(Base):
     finalLink = Column(String)
 
 
+# New model to represent the DataFrame
+class MarketCapData(Base):
+    __tablename__ = "hist_marketcap"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    symbol = Column(String, index=True)
+    date = Column(DateTime)
+    marketCap = Column(BigInteger)
+
+
+from sqlalchemy import Float
+
+
+# New model to represent the DataFrame with trading data
+class HistPrice(Base):
+    __tablename__ = "hist_prices"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    symbol = Column(String, index=True)
+    date = Column(DateTime)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    adjClose = Column(Float)
+    volume = Column(BigInteger)
+    unadjustedVolume = Column(BigInteger)
+    change = Column(Float)
+    changePercent = Column(Float)
+    vwap = Column(Float)
+    label = Column(String)
+    changeOverTime = Column(Float)
+
+
+=== Content of /home/sam/github/data-driven-investor-platform/data_pipeline/database/database_session.py ===
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from loguru import logger
+from common.config import DATABASE_URL
+
+try:
+    engine = create_engine(DATABASE_URL)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    logger.info("Successfully initialized the database session.")
+except Exception as e:
+    logger.exception(f"An error occurred while initializing the database: {e}")
+
+
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/common/config.py ===
 
 from dotenv import load_dotenv
@@ -402,7 +503,13 @@ MAX_BIGINT = 9223372036854775807
 === Content of /home/sam/github/data-driven-investor-platform/data_pipeline/fetch_data/fetch_equities.py ===
 
 import financedatabase as fd
-from investorkit.investorkit.get_data.base import get_profile, get_financial_statements
+from investorkit.investorkit.get_data.base import (
+    get_profile,
+    get_financial_statements,
+    get_historical_market_cap,
+    get_historical_prices,
+)
+
 from utils.context_manager import session_scope
 from utils.process_data import filter_bigint_range
 from datetime import datetime
@@ -457,7 +564,7 @@ def get_new_symbols(list_symbols, engine):
         existing_symbols_query = "SELECT symbol FROM profiles;"
         existing_symbols = pd.read_sql(existing_symbols_query, con=engine)
         new_symbols = list(set(list_symbols) - set(existing_symbols["symbol"].tolist()))
-        new_symbols = new_symbols[:20]
+
         logger.info(f"Identified {len(new_symbols)} new symbols")
         return new_symbols
     except Exception as e:
@@ -495,7 +602,7 @@ def fetch_and_store_profiles(engine, api_key, SessionLocal, run_id):
 
 def fetch_and_store_financial_statements(engine, api_key, SessionLocal, run_id):
     try:
-        query = "SELECT DISTINCT symbol FROM cashflows2;"
+        query = "SELECT DISTINCT symbol FROM cashflows;"
         existing_symbols_df = pd.read_sql(query, engine)
         existing_symbols = set(existing_symbols_df["symbol"])
 
@@ -517,9 +624,71 @@ def fetch_and_store_financial_statements(engine, api_key, SessionLocal, run_id):
                 start_date="2000-01-01",
             )
             filtered_df = filter_bigint_range(df, run_id)
-            store_to_db(filtered_df, "cashflows2", engine, SessionLocal, run_id)
+
+            store_to_db(filtered_df, "cashflows", engine, SessionLocal, run_id)
             logger.info(f"Stored financial statements for {len(chunk)} symbols.")
     except Exception as e:
         logger.exception(
             f"An error occurred while fetching and storing financial statements: {e}"
+        )
+
+
+def fetch_and_store_hist_prices(engine, api_key, SessionLocal, run_id):
+    try:
+        # Fetch existing symbols from the database
+        query = "SELECT DISTINCT symbol FROM hist_prices;"
+        existing_symbols_df = pd.read_sql(query, engine)
+        existing_symbols = set(existing_symbols_df["symbol"])
+
+        query = "SELECT * FROM profiles;"
+        df_profiles = pd.read_sql(query, engine)
+
+        list_symbols = list(df_profiles["symbol"])
+        list_symbols = [
+            symbol for symbol in list_symbols if symbol not in existing_symbols
+        ]
+
+        # Fetch and store historical prices
+        df = get_historical_prices(
+            list_symbols, [], api_key, "2000-01-01", "2023-10-17"
+        )
+        filtered_df = filter_bigint_range(df, run_id)
+
+        store_to_db(filtered_df, "hist_prices", engine, SessionLocal, run_id)
+        logger.info(f"Stored historical prices for {len(list_symbols)} symbols.")
+    except Exception as e:
+        logger.exception(
+            f"An error occurred while fetching and storing historical prices: {e}"
+        )
+
+
+def fetch_and_store_market_cap_data(engine, api_key, SessionLocal, run_id):
+    try:
+        # Fetch existing symbols from the database
+        query = "SELECT DISTINCT symbol FROM hist_marketcap;"
+        existing_symbols_df = pd.read_sql(query, engine)
+        existing_symbols = set(existing_symbols_df["symbol"])
+
+        query = "SELECT * FROM profiles;"
+        df_profiles = pd.read_sql(query, engine)
+
+        list_symbols = list(df_profiles["symbol"])
+        list_symbols = [
+            symbol for symbol in list_symbols if symbol not in existing_symbols
+        ]
+
+        # Divide the list_symbols into chunks
+        chunks = [list_symbols[i : i + 100] for i in range(0, len(list_symbols), 100)]
+
+        for chunk in chunks:
+            # Fetch and store historical prices for each chunk
+            df = get_historical_market_cap(chunk, api_key, "2000-01-01")
+            filtered_df = filter_bigint_range(df, run_id)
+
+            store_to_db(filtered_df, "hist_marketcap", engine, SessionLocal, run_id)
+            logger.info(f"Stored historical prices for {len(chunk)} symbols.")
+
+    except Exception as e:
+        logger.exception(
+            f"An error occurred while fetching and storing market cap data: {e}"
         )
